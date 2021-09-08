@@ -10,7 +10,10 @@ async function setData(){
 
     for (const key in data) {
         const body = data[key];
-        console.log(JSON.stringify(body));
+
+        body.nApproval = await getNumberAproval(body);
+        
+        console.log(JSON.stringify(body.nApproval));
         const url = 'https://hook.integromat.com/9pn6exv6utwk5x490mzm53gqxxti79kg';
 
         response  = await axios({
@@ -21,24 +24,58 @@ async function setData(){
             },
             data: body
         });
-        // console.log(response.json());
-        // axios.post(url, JSON.stringify(body))
-        // .then(function (response) {
-        //     console.log(response.data);
-        // })
-        // .catch(function (error) {
-        //     if (error.response) {
-        //         console.log(error.response.data);
-        //     } else if (error.request) {
-        //         console.log(error.request);
-        //     } else {
-        //         console.log('Error', error.message);
-        //     }
-        // });
-
-
         await sleep(4000);
     }
+}
+async function getNumberAproval(element){
+        if(element.paymentMethod != 'pse'){
+          let config = {
+            method: 'get',
+            url: 'https://ws.tupago.net.co/txn-info/by-idrequest/' + JSON.parse(element.idRequest),
+            headers: {'x-api-key': 'k1b0DpfSlTaz6FyzhfvRs9pl1xvFWLhn441JdGrE'}
+          }; 
+          let response = await axios(config)
+            .then(resp => resp).catch(error => {
+              if (error.response) {
+                return error.response;
+              } else if (error.request) {
+                return error.request;
+              } else {
+                return error.message;
+              }
+            });
+
+          nApproval = '99999999999';
+          if(response.status == 200){
+            const infoPayment = response.data.message;
+            nApproval = infoPayment.no_aprobacion;
+          }
+        } else {
+          let config = {   
+            method: 'get',   
+            url: `https://ws.tupago.net.co/orders/getOrdersByItemReference/${element.itemReference}?page=1`
+          }; 
+
+          let response = await axios(config)
+            .then(resp => resp).catch(error => {
+              if (error.response) {
+                return error.response;
+              } else if (error.request) {
+                return error.request;
+              } else {
+                return error.message;
+              }
+            });
+
+          nApproval = '88888888888';
+          if(response.status == 200){
+            const infoPayment = response.data;
+            if(infoPayment.length > 0){
+              nApproval = infoPayment[0].paymentReference;
+            }
+          }
+        }
+        return nApproval;
 }
 
 function sleep(ms) {
