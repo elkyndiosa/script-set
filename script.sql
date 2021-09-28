@@ -9,6 +9,10 @@ SELECT t2.created_at as dateTransaction,
         t2.payment_response,
         "$.body.dataPayment.paymentMethod"
     ) AS paymentMethod,
+    JSON_EXTRACT(
+        t2.payment_gateway_response,
+        "$.idRequest"
+    ) AS idRequest,
     t1.base_grand_total AS transactionValue,
     t2.item_reference AS itemReference,
     1500 as hicomeACH,
